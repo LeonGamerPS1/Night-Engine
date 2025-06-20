@@ -110,7 +110,7 @@ class StrumLine extends FlxSpriteGroup
 			{
 				note.wasGoodHit = true;
 				hitSignal(note);
-				strum.playAnim('confirm', true);
+				strum.playAnim('confirm', !note.isSustainNote);
 
 				if (note.isSustainNote || note.noteData.length > 0 && !note.isSustainNote)
 					strum.cover.visible = true;
@@ -182,7 +182,11 @@ class StrumLine extends FlxSpriteGroup
 			if (keyPress[strum.data])
 				strum.playAnim('press', true);
 			else if (keyReleased[strum.data])
+			{
 				strum.playAnim('static', false);
+				if (strum.cover.animation.name != "end")
+					strum.cover.visible = false;
+			}
 		});
 
 		for (note in notes.members.filter((n:Note) -> return (n.canBeHit)))
@@ -221,10 +225,21 @@ class StrumLine extends FlxSpriteGroup
 
 	function playerHit(shittNo:Note)
 	{
+		var note = shittNo;
 		shittNo.wasGoodHit = true;
 		var strum = strums.members[shittNo.noteData.data % strums.length];
-		strum.playAnim('confirm', true);
+		strum.playAnim('confirm', !note.isSustainNote);
 		hitSignal(shittNo);
+		if (note.isSustainNote || note.noteData.length > 0 && !note.isSustainNote)
+			strum.cover.visible = true;
+		if (note.animation.name.contains('end'))
+		{
+			strum.cover.animation.play('end');
+			strum.cover.visible = true;
+			note.visible = false;
+			strum.playAnim('press', true);
+		}
+
 		if (!shittNo.isSustainNote)
 			invalNote(shittNo);
 	}

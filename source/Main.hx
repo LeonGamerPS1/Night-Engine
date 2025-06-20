@@ -9,7 +9,8 @@ class Main extends Sprite
 	{
 		super();
 
-		addChild(new FlxGame(0, 0, PlayState,300,300));
+		addChild(new FlxGame(0, 0, PlayState));
+		addChild(new openfl.display.FPS(10, 10, 0xFFFFFFFF));
 		FlxG.inputs.add( Controls.instance = new Controls('coolbatfnf'));
 		
 	}

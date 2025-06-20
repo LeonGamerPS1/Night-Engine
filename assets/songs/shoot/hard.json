@@ -4595,7 +4595,7 @@
         "song": "shoot",
         "validScore": true,
         "sections": 0,
-        "arrowSkin":"default-pixel",
+        "arrowSkin":"default",
         "needsVoices": true,
         "speed": 2.5,
         "bpm": 175
