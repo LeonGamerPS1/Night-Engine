@@ -118,7 +118,6 @@ class StrumLine extends FlxSpriteGroup
 				{
 					strum.cover.animation.play('end');
 					strum.cover.visible = true;
-					note.visible = false;
 					strum.playAnim('static', true);
 				}
 
@@ -236,7 +235,6 @@ class StrumLine extends FlxSpriteGroup
 		{
 			strum.cover.animation.play('end');
 			strum.cover.visible = true;
-			note.visible = false;
 			strum.playAnim('press', true);
 		}
 

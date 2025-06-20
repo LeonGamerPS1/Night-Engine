@@ -20,7 +20,7 @@ class SustainCover extends FlxSprite
 		var name = Note.dirs[parent.data % Note.dirs.length];
 		frames = Paths.getAtlas(skinPath);
 		animation.addByPrefix('start', 'start', 24);
-		animation.addByPrefix('end', 'end', 30, false);
+		animation.addByPrefix('end', 'end', 24, false);
 		animation.play('start');
 		visible = false;
 		animation.onFinish.add((_) ->
