@@ -5,8 +5,10 @@
     "needsVoices": true,
     "player1": "bf-pixel",
     "player2": "senpai",
+    "gfVersion":"gf-pixel",
     "speed": 1.6,
     "arrowSkin": "default-pixel",
+    "stage":"school",
     "notes": [
       {
         "lengthInSteps": 16,

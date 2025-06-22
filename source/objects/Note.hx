@@ -1,6 +1,7 @@
 package objects;
 
 import backend.Song.NoteData;
+import flixel.system.FlxAssets;
 
 class Note extends FlxSprite
 {
@@ -56,7 +57,7 @@ class Note extends FlxSprite
 			antialiasing = skinData.antialiasing;
 
 			set.x -= width / 2;
-		
+
 			if (prevNote.isSustainNote)
 			{
 				prevNote.antialiasing = false;
@@ -141,5 +142,39 @@ class Note extends FlxSprite
 		if (frames != null)
 			frame = frames.frames[animation.frameIndex];
 		return clipRect = r;
+	}
+}
+
+class SustainShader extends FlxShader
+{
+	@:glFragmentSource('
+        #pragma header
+
+        uniform sampler2D sustainTexture;
+        uniform sampler2D endTexture;
+uniform float singleSustainLength;
+
+// animation stuff
+uniform bool isAnimated;
+uniform vec4 frameUV;
+
+        void main() {
+vec2 uv = openfl_TextureCoordv;
+            float scale = singleSustainLength / openfl_TextureSize.y;
+
+vec2 sustainUV = vec2(uv.x, mod(uv.y, scale) / scale);
+
+if (isAnimated) 
+sustainUV = frameUV.xy + sustainUV * frameUV.zw;
+
+            if (openfl_TextureCoordv.y >= 1.0 - scale)
+                gl_FragColor = flixel_texture2D(endTexture, sustainUV);
+            else
+                gl_FragColor = flixel_texture2D(sustainTexture, sustainUV);
+        }
+    ')
+	public function new()
+	{
+		super();
 	}
 }

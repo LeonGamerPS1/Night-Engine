@@ -37,6 +37,7 @@ class StrumLine extends FlxSpriteGroup
 
 	function generate()
 	{
+
 		for (i in strums)
 		{
 			i.destroy();
@@ -61,6 +62,8 @@ class StrumLine extends FlxSpriteGroup
 		}
 	}
 
+	public var character:BaseCharacter;
+
 	override function update(elapsed:Float)
 	{
 		if (unspawnNotes[0] != null)
@@ -72,11 +75,12 @@ class StrumLine extends FlxSpriteGroup
 			while (unspawnNotes.length > 0 && unspawnNotes[0].noteData.time - Conductor.instance.time < time)
 			{
 				var dunceNote:Note = unspawnNotes[0];
+				dunceNote.setPosition(-6666, 6666);
 				notes.add(dunceNote);
 
 				var index:Int = unspawnNotes.indexOf(dunceNote);
 				unspawnNotes.splice(index, 1);
-				notes.sort(sortNotesByTimeHelper, FlxSort.DESCENDING);
+				// notes.sort(sortNotesByTimeHelper, FlxSort.DESCENDING);
 			}
 		}
 
@@ -111,6 +115,8 @@ class StrumLine extends FlxSpriteGroup
 				note.wasGoodHit = true;
 				hitSignal(note);
 				strum.playAnim('confirm', !note.isSustainNote);
+				if (character != null)
+					character.sing(note);
 
 				if (note.isSustainNote || note.noteData.length > 0 && !note.isSustainNote)
 					strum.cover.visible = true;
@@ -151,30 +157,37 @@ class StrumLine extends FlxSpriteGroup
 	inline public static function sortNotesByTimeHelper(Order:Int, Obj1:Note, Obj2:Note)
 		return FlxSort.byValues(Order, Obj1.noteData.time, Obj2.noteData.time);
 
+	var keyPress:Array<Bool> = [];
+	var keyHold:Array<Bool> = [];
+	var keyReleased:Array<Bool> = [];
+
 	public function keyPregnancy():Void
 	{
 		hitNotes = [];
 		directions = [];
 		// fuck this  shitty function name!
-		var keyPress:Array<Bool> = [
+		keyPress = [
 			Controls.instance.justPressed.NOTE_LEFT,
 			Controls.instance.justPressed.NOTE_DOWN,
 			Controls.instance.justPressed.NOTE_UP,
 			Controls.instance.justPressed.NOTE_RIGHT
 		];
-		var keyHold:Array<Bool> = [
+		keyHold = [
 			Controls.instance.pressed.NOTE_LEFT,
 			Controls.instance.pressed.NOTE_DOWN,
 			Controls.instance.pressed.NOTE_UP,
 			Controls.instance.pressed.NOTE_RIGHT
 		];
 
-		var keyReleased:Array<Bool> = [
+		keyReleased = [
 			Controls.instance.justReleased.NOTE_LEFT,
 			Controls.instance.justReleased.NOTE_DOWN,
 			Controls.instance.justReleased.NOTE_UP,
 			Controls.instance.justReleased.NOTE_RIGHT
 		];
+
+		if (keyHold.contains(true) && character != null && character.holdTimer < 0.04)
+			character.holdTimer = 0.04;
 
 		strums.forEachAlive(function(strum:Strum)
 		{
@@ -229,6 +242,9 @@ class StrumLine extends FlxSpriteGroup
 		var strum = strums.members[shittNo.noteData.data % strums.length];
 		strum.playAnim('confirm', !note.isSustainNote);
 		hitSignal(shittNo);
+		if (character != null)
+			character.sing(shittNo);
+
 		if (note.isSustainNote || note.noteData.length > 0 && !note.isSustainNote)
 			strum.cover.visible = true;
 		if (note.animation.name.contains('end'))
@@ -240,5 +256,11 @@ class StrumLine extends FlxSpriteGroup
 
 		if (!shittNo.isSustainNote)
 			invalNote(shittNo);
+	}
+	public function beatHit(beat:Float)
+	{
+		if (character != null && (cpu || !cpu && !keyHold.contains(true)))
+			character.dance(beat);
+		notes.sort(sortNotesByTimeHelper, FlxSort.DESCENDING);
 	}
 }

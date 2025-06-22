@@ -54,13 +54,11 @@ typedef Event =
 
 class Song
 {
-	public static function grabSong(songID:String = 'Senpai', jsonName:String = 'hard'):SongMap
+	public static function grabSong(songID:String = 'Tutorial', jsonName:String = 'hard'):SongMap
 	{
 		final songPath:String = Paths.getAssetPath('songs/$songID/$jsonName.json'); // assets/song/thing.json for example
 
 		var id:String = '$songID-$jsonName';
-		trace(Paths.exists(songPath));
-		trace(songPath);
 
 		if (Paths.exists(songPath))
 		{
@@ -94,6 +92,9 @@ class Song
 	public static function fromPsychLegacy(legacyJson:moonchart.formats.fnf.legacy.FNFPsych)
 	{
 		// uwu~
+		var raw = Json.parse(legacyJson.stringify().data);
+		
+
 		var output:SongMap = {
 			displayName: legacyJson.data.song.song,
 			songName: legacyJson.data.song.song,
@@ -110,7 +111,7 @@ class Song
 			speed: legacyJson.data.song.speed,
 			tracks: {
 				main: 'songs/${legacyJson.data.song.song}/Inst.ogg',
-				extra: ['songs/${legacyJson.data.song.song}/Voices.ogg']
+				extra: raw.tracks == null ? ['songs/${legacyJson.data.song.song}/Voices.ogg'] : raw.tracks
 			},
 
 			notes: [],
@@ -172,6 +173,4 @@ class Song
 		// TODO: Finish chart converter for  vslice to hyper
 		// totally didnt steal this file from my other project
 	}
-
-	
 }

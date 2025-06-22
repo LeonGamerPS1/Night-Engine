@@ -1,6 +1,9 @@
 package backend;
+import openfl.display.BitmapData;
 import openfl.media.Sound;
 import openfl.net.URLRequest;
+import sys.FileSystem;
+import sys.io.File;
 
 class Paths
 {
@@ -34,10 +37,10 @@ class Paths
 		if (images.exists(path))
 			return images.get(path);
 
-		if (openfl.Assets.exists(path, IMAGE))
+		if (FileSystem.exists(path))
 		{
 			var image:FlxGraphic = null;
-			image = FlxG.bitmap.add(path);
+			image = FlxGraphic.fromBitmapData(BitmapData.fromFile(path));
 
 			image.bitmap.disposeImage();
 			image.persist = true;
@@ -53,7 +56,11 @@ class Paths
 
 	public static inline function xml(key:String):String
 	{
-		return getPath('images/$key.xml');
+		var path = getPath('images/$key.xml');
+		if (FileSystem.exists(path))
+			return File.read(path).readAll().toString();
+
+		return path;
 	}
 
 	public inline static function txt(key:String, ?folder:String = 'data'):String
@@ -107,13 +114,13 @@ class Paths
 	@:inheritDoc(openfl.Assets.getText)
 	public static function getText(id:String)
 	{
-		return openfl.Assets.getText(id);
+		return File.read(id).readAll().toString();
 	}
 
 	@:inheritDoc(openfl.Assets.getText)
 	public static function exists(id:String)
 	{
-		return openfl.Assets.exists(id);
+		return FileSystem.exists(id);
 	}
 
 	public static function sanitizeFilename(name:String):String {

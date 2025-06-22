@@ -1,0 +1,50 @@
+{
+  "icon": "dad",
+  "texture": "characters/DADDY_DEAREST",
+  "scale": 1,
+
+  "cameraOffset": { "x": 0, "y": 0 },
+  "positionOffset": { "x": 0, "y": 0 },
+  "dancer": false,
+  "flipX": false,
+  "holdSteps": 4.02,
+  "antialiasing":true,
+
+  "animations": [
+    {
+      "name": "idle",
+      "prefix": "Dad idle dance",
+      "fps": 24,
+      "looped": false,
+      "offset": { "x": 0, "y": 0 }
+    },
+    {
+      "name": "singLEFT",
+      "prefix": "Dad Sing Note LEFT0",
+      "fps": 24,
+      "looped": false,
+      "offset": { "x": -9, "y": 10 }
+    },
+    {
+      "name": "singDOWN",
+      "prefix": "Dad Sing Note DOWN0",
+      "fps": 24,
+      "looped": false,
+      "offset": { "x": 0, "y": -30 }
+    },
+    {
+      "name": "singUP",
+      "prefix": "Dad Sing Note UP0",
+      "fps": 24,
+      "looped": false,
+      "offset": { "x": -6, "y": 50 }
+    },
+    {
+      "name": "singRIGHT",
+      "prefix": "Dad Sing Note RIGHT0",
+      "fps": 24,
+      "looped": false,
+      "offset": { "x": 0, "y": 27 }
+    }
+  ]
+}
