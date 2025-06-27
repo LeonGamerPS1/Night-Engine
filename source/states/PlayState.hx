@@ -1,8 +1,11 @@
 package states;
 
 import backend.Song;
+import haxe.io.Path;
 import lime.app.Application;
 import lime.math.Rectangle;
+import modchart.Config;
+import modchart.Manager;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
 #if sys
@@ -12,6 +15,7 @@ import sys.io.File;
 
 class PlayState extends FlxState implements IStageState
 {
+	public static var self(default, null):PlayState;
 	public static var daPixelZoom(default, null):Float = 6;
 
 	public var plrStrums:StrumLine;
@@ -27,7 +31,7 @@ class PlayState extends FlxState implements IStageState
 	public var startedCountdown:Bool = false;
 	public var startedSong:Bool = false;
 	public var songSpeed(default, set):Float = 1;
-	public var downScroll(default, null):Bool = false;
+	public var downScroll:Bool = false;
 	public var healthBar:FlxBar;
 	public var healthBarBG:FlxSprite;
 	public var health:Float = 1;
@@ -52,6 +56,7 @@ class PlayState extends FlxState implements IStageState
 
 	public function stageLoad()
 	{
+		self = this;
 		var path = Paths.getAssetPath('stages/${song.stage}.json');
 		if (!Paths.exists(path))
 			path = Paths.getAssetPath('stages/stage.json');
@@ -82,11 +87,16 @@ class PlayState extends FlxState implements IStageState
 				addStage(new objects.stages.Week6(this, true, null));
 		}
 		// call('onStageLoaded');
+		if (Paths.exists('assets/stages/$curStage.hscript'))
+			scripts.push(makeScript('assets/stages/$curStage.hscript', HSCRIPT));
+		call('onStageLoaded', [curStage]);
 	}
 
 	override public function create()
 	{
 		super.create();
+		mod = new Manager();
+
 		song ??= Song.grabSong();
 		Conductor.instance.reset(true);
 		Conductor.instance.changeBpmAt(0, song.bpm, 4, 4);
@@ -111,6 +121,11 @@ class PlayState extends FlxState implements IStageState
 		ui.cameras = [camHUD];
 		add(ui);
 
+		if (Paths.exists('assets/songs/${song.songName}.hscript'))
+			scripts.push(makeScript('assets/songs/${song.songName}.hscript', HSCRIPT));
+
+		call('onCreate');
+
 		dadStrums = new StrumLine((160 * 0.7 / 2) + 50, !downScroll ? 50 : FlxG.height - 150, downScroll, skin);
 		strumLines.push(dadStrums);
 		ui.add(dadStrums);
@@ -122,9 +137,10 @@ class PlayState extends FlxState implements IStageState
 
 		gfStrums = new StrumLine((160 * 0.7 / 2) + 5044, !downScroll ? 50 : FlxG.height - 150, downScroll, skin);
 		strumLines.push(gfStrums);
+		gfStrums.visible = false;
 		ui.add(gfStrums);
 
-		healthBarBG = new FlxSprite(0, !downScroll ? FlxG.height * 0.89 : 150, Paths.image('healthBar'));
+		healthBarBG = new FlxSprite(0, !downScroll ? FlxG.height * 0.89 : 100, Paths.image('healthBar'));
 		healthBarBG.screenCenter(X);
 		ui.add(healthBarBG);
 
@@ -142,7 +158,6 @@ class PlayState extends FlxState implements IStageState
 		iconP1.x = healthBar.x + healthBar.width / 2 + 10;
 		ui.add(iconP1);
 
-		
 		scoreText = new FlxText(healthBar.x + healthBar.width - 190, healthBar.y + 30, 0, 'Score: 0 // Misses: 0 // Rating: 0% (Unjudged)', 20);
 		scoreText.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		scoreText.borderSize = 1;
@@ -167,12 +182,36 @@ class PlayState extends FlxState implements IStageState
 		});
 		genC();
 
+		// On your create function.
+		ui.insert(ui.members.indexOf(strumLines[0]), mod);
+
 		startCallback();
+		call('onCreatePost');
+	}
+
+	public function set(n:String, v:Dynamic)
+	{
+		for (_ in scripts)
+			_.set(n, v);
+	}
+
+	public function call(s:String, ?args:Array<Dynamic>):Dynamic
+	{
+		args ??= [];
+		var returnVal = null;
+		for (_ in scripts)
+		{
+			returnVal = _.call(s, args);
+			if (returnVal != null)
+				continue;
+		}
+		return returnVal;
 	}
 
 	public var bf:BaseCharacter;
 	public var dad:BaseCharacter;
 	public var gf:BaseCharacter;
+	public var scripts:Array<BaseScript> = [];
 
 	public var eventNotes:Array<Event> = [];
 
@@ -321,6 +360,7 @@ class PlayState extends FlxState implements IStageState
 
 	public function hit(note:Note)
 	{
+		call('hit', [note]);
 		if (note.strumLine != null && !note.strumLine.cpu && !note.isSustainNote)
 		{
 			score += 350.1;
@@ -337,6 +377,7 @@ class PlayState extends FlxState implements IStageState
 			var oldNote = strumLines[noteData.strumLine].unspawnNotes[strumLines[noteData.strumLine].unspawnNotes.length - 1];
 			var note:Note = new Note(noteData, false, oldNote, strumLines[noteData.strumLine].strums.members[noteData.data].skin);
 			strumLines[noteData.strumLine].unspawnNotes.push(note);
+			note.parent = note;
 
 			if (noteData.length > 0)
 			{
@@ -344,12 +385,13 @@ class PlayState extends FlxState implements IStageState
 				{
 					oldNote = strumLines[noteData.strumLine].unspawnNotes[strumLines[noteData.strumLine].unspawnNotes.length - 1];
 					var sustain:Note = new Note({
-						time: noteData.time + (Conductor.instance.stepCrochet * i) + (Conductor.instance.stepCrochet / songSpeed),
+						time: noteData.time + (Conductor.instance.stepCrochet * i),
 						data: noteData.data,
 						type: noteData.type,
 						strumLine: noteData.strumLine,
 						length: 0
 					}, true, oldNote, note.skin);
+					sustain.parent = note;
 					strumLines[noteData.strumLine].unspawnNotes.push(sustain);
 				}
 			}
@@ -389,6 +431,7 @@ class PlayState extends FlxState implements IStageState
 			FlxTween.tween(screenshotSPR, {alpha: 0}, 1);
 		}
 		#end
+		call('onUpdate', [elapsed]);
 		health = FlxMath.bound(health, 0, 2);
 		score = FlxMath.roundDecimal(score, 2);
 		var scoreString:String = 'Score: $score // Misses: $misses // Rating: 0% (Unjudged, YOU SUCK!)';
@@ -430,6 +473,21 @@ class PlayState extends FlxState implements IStageState
 		{
 			_.updatePost(elapsed);
 		});
+		call('onUpdatePost', [elapsed]);
+	}
+
+	public function makeScript(path:String, ?type:ScriptType = HSCRIPT):BaseScript
+	{
+		switch (type)
+		{
+			default:
+				trace("[SCRIPTLOADER] Script type ' " + type + "' doesn't exist. Available Types: \n HSCRIPT \n LUA");
+			case HSCRIPT:
+				var script:HScript = new HScript(path, path);
+				trace("[SCRIPTLOADER] SUCCESSFULLY LOADED SCRIPT: " + path);
+				return script;
+		}
+		return null;
 	}
 
 	function startSong()
@@ -440,6 +498,8 @@ class PlayState extends FlxState implements IStageState
 		for (_ in tracks)
 			_.play();
 	}
+
+	public var mod:Manager;
 
 	public function startCountdown()
 	{
@@ -462,6 +522,7 @@ class PlayState extends FlxState implements IStageState
 
 	public function step(val:Float)
 	{
+		call('step', [step]);
 		forEachStage((_) ->
 		{
 			_.curStep = val;
@@ -476,6 +537,7 @@ class PlayState extends FlxState implements IStageState
 
 		iconP2.scale.set(1.2, 1.2);
 		iconP2.updateHitbox();
+		call('beat', [val]);
 		forEachStage((_) ->
 		{
 			_.curBeat = val;
@@ -485,6 +547,7 @@ class PlayState extends FlxState implements IStageState
 
 	public function section(val:Float)
 	{
+		call('section', [val]);
 		FlxG.camera.zoom += 0.02;
 		camHUD.zoom += 0.04;
 		forEachStage((_) ->
@@ -518,4 +581,10 @@ class PlayState extends FlxState implements IStageState
 	{
 		return (healthBar != null ? healthBar.x - (healthBar.width * (healthBar.percent / 100)) + healthBar.width : 0);
 	}
+}
+
+enum abstract ScriptType(String) from String to String
+{
+	var HSCRIPT = "HSCRIPT";
+	var LUA = "LUA";
 }

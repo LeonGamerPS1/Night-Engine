@@ -4,6 +4,7 @@ class SustainCover extends FlxSprite
 {
 	public var parent:Strum;
 
+
 	public function new(strum:Strum)
 	{
 		super();

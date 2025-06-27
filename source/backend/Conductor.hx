@@ -57,6 +57,7 @@ class Conductor
 
 	public static var safeFrames:Int = 10;
 	public static var safeZoneOffset:Float = (safeFrames / 60) * 1000; // is calculated in create(), is safeFrames in milliseconds
+	public var decBeat:Float = 0; 
 
 	/**
 		Set the conductor's time.
@@ -69,6 +70,7 @@ class Conductor
 		_stepTracker = Math.ffloor(stepOffset + calc / stepCrochet);
 		_beatTracker = Math.ffloor(beatOffset + calc / crochet);
 		_measureTracker = Math.ffloor(measureOffset + calc / measureCrochet);
+		decBeat = (beatOffset + calc / crochet);
 
 		if (active)
 		{
@@ -115,18 +117,18 @@ class Conductor
 	**/
 	var curMeasure(default, null):Float = 0;
 
-	private var _stepTracker(default, null):Float = 0;
-	private var _beatTracker(default, null):Float = 0;
-	private var _measureTracker(default, null):Float = 0;
+	public var _stepTracker(default, null):Float = 0;
+	public var _beatTracker(default, null):Float = 0;
+	public var _measureTracker(default, null):Float = 0;
 
-	private var stepOffset(default, null):Float = 0;
-	private var beatOffset(default, null):Float = 0;
-	private var measureOffset(default, null):Float = 0;
+	public var stepOffset(default, null):Float = 0;
+	public var beatOffset(default, null):Float = 0;
+	public var measureOffset(default, null):Float = 0;
 
 	/**
 		The time offsetted for bpm changes or time signatures.
 	**/
-	private var offsetTime(default, null):Float = 0;
+	public var offsetTime(default, null):Float = 0;
 
 	/**
 		The step count of a beat.

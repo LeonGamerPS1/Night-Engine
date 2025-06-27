@@ -11,6 +11,8 @@ class Note extends FlxSprite
 	public var set:FlxPoint = FlxPoint.get();
 	public var strumLine:StrumLine;
 
+	public var parent(default, default):Note;
+
 	public function new(noteData:NoteData, sus:Bool = false, ?prevNote:Note = null, ?texture:String = "default")
 	{
 		super(-500);
@@ -53,6 +55,8 @@ class Note extends FlxSprite
 			playAnim('end');
 			updateHitbox();
 
+			multAlpha = 0.7;
+			alpha = 0.7;
 			updateHitbox();
 			antialiasing = skinData.antialiasing;
 

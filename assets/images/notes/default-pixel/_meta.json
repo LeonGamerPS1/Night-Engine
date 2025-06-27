@@ -2,11 +2,11 @@
     "scale": 6,
     "antialiasing": false,
     "sustainScale": 5.12,
-    "fps": 16,
+    "fps": 24,
     "name": "pixel",
       "cover":{
-        "offsetX":115,
-        "offsetY":22,
+        "offsetX":120,
+        "offsetY":26,
         "scaleX":6,
         "scaleY":6
     }

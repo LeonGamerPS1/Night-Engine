@@ -6,7 +6,7 @@
   "cameraOffset": { "x": 0, "y": 0 },
   "positionOffset": { "x": 0, "y": 0 },
   "dancer": true,
-  "flipX": false,
+  "flipX": true,
   "holdSteps": 4,
   "antialiasing": true,
 

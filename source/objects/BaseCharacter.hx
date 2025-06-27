@@ -93,7 +93,7 @@ class BaseCharacter extends FlxSprite
 		if (holdTimer > 0)
 		{
 			holdTimer -= elapsed;
-			if (holdTimer < 0)
+			if (holdTimer < 0.01)
 			{
 				holdTimer = 0;
 				playAnim(!dancer ? 'idle' : 'danceLeft');

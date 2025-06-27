@@ -114,7 +114,10 @@ class Paths
 	@:inheritDoc(openfl.Assets.getText)
 	public static function getText(id:String)
 	{
-		return File.read(id).readAll().toString();
+		var content = File.read(id);
+		var output = content.readAll().toString();
+		content.close();
+		return output;
 	}
 
 	@:inheritDoc(openfl.Assets.getText)

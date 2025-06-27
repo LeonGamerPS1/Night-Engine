@@ -29,6 +29,7 @@ import object.*;
 import object.play.*;
 import object.stages.*;
 import objects.*;
+import scripting.*;
 import states.*;
 
 using StringTools;

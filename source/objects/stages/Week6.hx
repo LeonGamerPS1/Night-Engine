@@ -60,7 +60,7 @@ class Week6 extends BaseStage
 		switch (songName)
 		{
 			case 'dreams-of-roses' | 'roses':
-				FlxG.sound.play(Paths.sound('ANGRY_TEXT_BOX'));
+				//	FlxG.sound.play(Paths.sound('ANGRY_TEXT_BOX'));
 
 				if (bgGirls != null)
 					bgGirls.swapDanceType();
