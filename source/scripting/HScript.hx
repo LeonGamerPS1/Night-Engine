@@ -22,8 +22,14 @@ class HScript extends BaseScript
 		program.getParser(HxParser).allowAll();
 		program.execute(Paths.getText(path));
 		set('game',PlayState.self);
-		set('addModifier',PlayState.self.mod.addModifier);
-		set('setPercent',PlayState.self.mod.setPercent);
+		set('addModifier', function(n:String)
+		{
+			PlayState.self.mod.addModifier(n);
+		});
+		set('setPercent', function(n:String, v:Float)
+		{
+			PlayState.self.mod.setPercent(n, v);
+		});
 	}
 
 	override function set(n:String, v:Dynamic) {
