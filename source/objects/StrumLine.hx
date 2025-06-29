@@ -8,36 +8,39 @@ class StrumLine extends FlxSpriteGroup
 	public var songSpeed:Float = 1;
 
 	public var strums:FlxTypedSpriteGroup<Strum>;
-	public var covers:FlxTypedSpriteGroup<SustainCover>;
+
 	public var notes:FlxTypedSpriteGroup<Note>;
 
 	public var unspawnNotes:Array<Note> = [];
 	public var cpu = true;
 	public var downScroll:Bool = false;
 	public var sk = null;
+	public var size:Float = 1;
+	public var sustains:FlxTypedSpriteGroup<Sustain>;
 
-	public function new(x:Float = 0, y:Float = 0, downScroll:Bool = false, skin:String = "default")
+	public function new(x:Float = 0, y:Float = 0, downScroll:Bool = false, skin:String = "default", sc:Float = 1)
 	{
 		super(x, y);
+		this.size = sc;
 
 		this.sk = skin;
 		this.downScroll = downScroll;
 
+
 		strums = new FlxTypedSpriteGroup<Strum>();
 		add(strums);
 
+		sustains = new FlxTypedSpriteGroup<Sustain>();
+		add(sustains);
+
 		notes = new FlxTypedSpriteGroup<Note>();
 		add(notes);
-
-		covers = new FlxTypedSpriteGroup<SustainCover>();
-		add(covers);
 
 		generate();
 	}
 
 	function generate()
 	{
-
 		for (i in strums)
 		{
 			i.destroy();
@@ -45,23 +48,15 @@ class StrumLine extends FlxSpriteGroup
 			i = null;
 		}
 
-		for (i in covers)
-		{
-			i.destroy();
-			covers.remove(i, true);
-			i = null;
-		}
-
 		for (i in 0...4)
 		{
-			var strum:Strum = new Strum(i, sk);
+			var strum:Strum = new Strum(i, sk, this);
 			strum.downScroll = downScroll;
-			covers.add(strum.cover);
+
 			strums.add(strum);
-			strum.x = strum.x + (160 * 0.7) * i;
+			strum.x = strum.x + (160 * 0.7) * i * size;
 			strum.y = strums.y;
 			strum.strumLine = this;
-			
 		}
 	}
 
@@ -80,6 +75,12 @@ class StrumLine extends FlxSpriteGroup
 				var dunceNote:Note = unspawnNotes[0];
 				dunceNote.setPosition(-6666, 6666);
 				notes.add(dunceNote);
+
+				if (dunceNote.noteData.length > 0)
+				{
+					dunceNote.sustain = new Sustain(dunceNote);
+					sustains.add(dunceNote.sustain);
+				}
 
 				var index:Int = unspawnNotes.indexOf(dunceNote);
 				unspawnNotes.splice(index, 1);
@@ -102,53 +103,53 @@ class StrumLine extends FlxSpriteGroup
 		{
 			var strum = strums.members[note.noteData.data % strums.length];
 
-			note.x = strum.x + note.set.x;
-			note.y = strum.y + (note.noteData.time - Conductor.instance.time) * (0.45 * songSpeed * (!strum.downScroll ? 1 : -1)) + note.set.y;
-			note.alpha = strum.alpha * note.multAlpha;
-			note.strumLine = this;
+			note.followStrumNote(strum, songSpeed);
 
-			if (cpu
-				&& (note.noteData.time <= Conductor.instance.time
-					|| note.isSustainNote
-					&& note.prevNote.wasGoodHit
-					&& note.noteData.time <= Conductor.instance.time + (Conductor.safeZoneOffset * 0.5))
-				&& !note.wasGoodHit
-				&& !note.ignoreNote)
+			if (cpu && (note.noteData.time <= Conductor.instance.time) && !note.ignoreNote)
 			{
-				note.wasGoodHit = true;
-				strum.playAnim('confirm', true);
+				strum.playAnim('confirm', !note.wasGoodHit);
+
 				if (character != null)
 					character.sing(note);
 
-				if (note.isSustainNote || note.noteData.length > 0 && !note.isSustainNote)
-					strum.cover.visible = true;
-				if (note.animation.name.contains('end'))
-				{
-					strum.cover.animation.play('end');
-					strum.cover.visible = true;
-					strum.playAnim('static', true);
-				}
 				hitSignal(note);
-
-				if (!note.isSustainNote)
-					invalNote(note);
+				note.wasGoodHit = true;
 			}
 
-			if (note.isSustainNote)
-				note.clipToStrumNote(strum);
+			if (note.wasGoodHit && !note.ignoreNote)
+			{
+				note.setPosition(strum.x, strum.y);
+				note.visible = false;
+				if (!cpu && !keyHold[note.noteData.data])
+					invalNote(note);
+				else if (!cpu && keyHold[note.noteData.data])
+				{
+					playerHit(note);
+				}
+			}
 
-			if (note.noteData.time < Conductor.instance.time - (350 / songSpeed))
+			if (note.noteData.time < Conductor.instance.time - (350 / songSpeed) && !note.wasGoodHit)
 			{
 				if (!cpu && !note.wasGoodHit && !note.ignoreNote)
 					miss(note.noteData.data);
 
 				invalNote(note);
 			}
+			if (note.noteData.time + note.noteData.length < Conductor.instance.time && note.wasGoodHit && !note.ignoreNote)
+				invalNote(note);
 		});
 	}
 
 	function invalNote(note:Note)
 	{
+		if (note.sustain != null)
+		{
+			sustains.remove(note.sustain, true);
+			note.sustain.destroy();
+
+			note.sustain = null;
+		}
+
 		note.destroy();
 		notes.remove(note, true);
 		note = null;
@@ -199,9 +200,7 @@ class StrumLine extends FlxSpriteGroup
 			else if (!keyHold[strum.data])
 			{
 				if (strum.animation.finished)
-				strum.playAnim('static', false);
-				if (strum.cover.animation.name != "end")
-					strum.cover.visible = false;
+					strum.playAnim('static', false);
 			}
 		});
 
@@ -219,13 +218,7 @@ class StrumLine extends FlxSpriteGroup
 
 			for (shittNo in hitNotes)
 			{
-				if (!shittNo.wasGoodHit && keyPress[shittNo.noteData.data] && !shittNo.isSustainNote)
-					playerHit(shittNo);
-
-				if (!shittNo.wasGoodHit
-					&& keyHold[shittNo.noteData.data]
-					&& shittNo.isSustainNote
-					&& (shittNo.canBeHit || shittNo.prevNote.wasGoodHit && shittNo.canBeHit))
+				if (!shittNo.ignoreNote && keyPress[shittNo.noteData.data])
 					playerHit(shittNo);
 			}
 		}
@@ -241,26 +234,17 @@ class StrumLine extends FlxSpriteGroup
 
 	function playerHit(shittNo:Note)
 	{
-		var note = shittNo;
-		shittNo.wasGoodHit = true;
 		var strum = strums.members[shittNo.noteData.data % strums.length];
-		strum.playAnim('confirm', true);
-		hitSignal(shittNo);
+		strum.playAnim('confirm', !shittNo.wasGoodHit);
+
 		if (character != null)
 			character.sing(shittNo);
 
-		if (note.isSustainNote || note.noteData.length > 0 && !note.isSustainNote)
-			strum.cover.visible = true;
-		if (note.animation.name.contains('end'))
-		{
-			strum.cover.animation.play('end');
-			strum.cover.visible = true;
-			strum.playAnim('press', true);
-		}
+		hitSignal(shittNo);
 
-		if (!shittNo.isSustainNote)
-			invalNote(shittNo);
+		shittNo.wasGoodHit = true;
 	}
+
 	public function beatHit(beat:Float)
 	{
 		if (character != null && (cpu || !cpu && !keyHold.contains(true)))

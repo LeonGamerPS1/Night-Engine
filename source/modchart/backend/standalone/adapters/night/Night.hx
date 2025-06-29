@@ -26,7 +26,7 @@ class Night implements IAdapter
 
 	public function getBeatFromStep(step:Float):Float
 	{
-		return step * .25;
+		return step / 4;
 	}
 
 	public function getDefaultReceptorX(lane:Int, player:Int):Float
@@ -82,7 +82,7 @@ class Night implements IAdapter
 
 	public function onModchartingInitialization()
 	{
-		__fCrochet = (Conductor.instance.crochet + 8) / 4;
+		__fCrochet = (Conductor.instance.crochet) / 4;
 	}
 
 	public function getLaneFromArrow(sprite:FlxSprite):Int

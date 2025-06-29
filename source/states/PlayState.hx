@@ -4,8 +4,6 @@ import backend.Song;
 import haxe.io.Path;
 import lime.app.Application;
 import lime.math.Rectangle;
-import modchart.Config;
-import modchart.Manager;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
 #if sys
@@ -85,6 +83,8 @@ class PlayState extends FlxState implements IStageState
 
 			case 'school':
 				addStage(new objects.stages.Week6(this, true, null));
+			case 'schoolEvil':
+				addStage(new objects.stages.Week6Evil(this, true, null));	
 		}
 		// call('onStageLoaded');
 		if (Paths.exists('assets/stages/$curStage.hscript'))
@@ -95,7 +95,6 @@ class PlayState extends FlxState implements IStageState
 	override public function create()
 	{
 		super.create();
-		mod = new Manager();
 
 		song ??= Song.grabSong();
 		Conductor.instance.reset(true);
@@ -181,9 +180,6 @@ class PlayState extends FlxState implements IStageState
 			_.createPost();
 		});
 		genC();
-
-		// On your create function.
-		ui.insert(ui.members.indexOf(strumLines[0]), mod);
 
 		startCallback();
 		call('onCreatePost');
@@ -360,8 +356,9 @@ class PlayState extends FlxState implements IStageState
 
 	public function hit(note:Note)
 	{
-		call('hit', [note]);
-		if (note.strumLine != null && !note.strumLine.cpu && !note.isSustainNote)
+		if (!note.wasGoodHit)
+			call('hit', [note]);
+		if (note.strumLine != null && !note.strumLine.cpu && !note.wasGoodHit)
 		{
 			score += 350.1;
 			health += 0.04;
@@ -374,27 +371,18 @@ class PlayState extends FlxState implements IStageState
 			eventNotes.push(_);
 		for (noteData in song.notes)
 		{
-			var oldNote = strumLines[noteData.strumLine].unspawnNotes[strumLines[noteData.strumLine].unspawnNotes.length - 1];
-			var note:Note = new Note(noteData, false, oldNote, strumLines[noteData.strumLine].strums.members[noteData.data].skin);
-			strumLines[noteData.strumLine].unspawnNotes.push(note);
+			var line = strumLines[noteData.strumLine];
+			var oldNote = line.unspawnNotes[line.unspawnNotes.length - 1];
+			var note:Note = new Note(noteData, false, oldNote, line.strums.members[noteData.data].skin, line);
+			line.unspawnNotes.push(note);
 			note.parent = note;
-
-			if (noteData.length > 0)
+		}
+		for (_ in strumLines)
+		{
+			_.unspawnNotes.sort((d_, d_2) ->
 			{
-				for (i in 0...Math.floor(noteData.length / Conductor.instance.stepCrochet + 1))
-				{
-					oldNote = strumLines[noteData.strumLine].unspawnNotes[strumLines[noteData.strumLine].unspawnNotes.length - 1];
-					var sustain:Note = new Note({
-						time: noteData.time + (Conductor.instance.stepCrochet * i),
-						data: noteData.data,
-						type: noteData.type,
-						strumLine: noteData.strumLine,
-						length: 0
-					}, true, oldNote, note.skin);
-					sustain.parent = note;
-					strumLines[noteData.strumLine].unspawnNotes.push(sustain);
-				}
-			}
+				return Math.floor(d_.noteData.time - d_2.noteData.time);
+			});
 		}
 	}
 
@@ -474,6 +462,17 @@ class PlayState extends FlxState implements IStageState
 			_.updatePost(elapsed);
 		});
 		call('onUpdatePost', [elapsed]);
+		if (Controls.instance.justPressed.CHART)
+		{
+			Conductor.instance.reset(true);
+			FlxG.switchState(new Charter());
+		}
+	}
+
+	override function destroy()
+	{
+		self = null;
+		super.destroy();
 	}
 
 	public function makeScript(path:String, ?type:ScriptType = HSCRIPT):BaseScript
@@ -499,8 +498,6 @@ class PlayState extends FlxState implements IStageState
 			_.play();
 	}
 
-	public var mod:Manager;
-
 	public function startCountdown()
 	{
 		startedCountdown = true;
@@ -522,7 +519,7 @@ class PlayState extends FlxState implements IStageState
 
 	public function step(val:Float)
 	{
-		call('step', [step]);
+		call('step', [val]);
 		forEachStage((_) ->
 		{
 			_.curStep = val;

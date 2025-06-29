@@ -1,6 +1,5 @@
 package scripting;
 
-
 import rulescript.RuleScript;
 import rulescript.interps.BytecodeInterp;
 import rulescript.parsers.HxParser;
@@ -21,24 +20,19 @@ class HScript extends BaseScript
 		program.getInterp(BytecodeInterp).staticOptimization = false;
 		program.getParser(HxParser).allowAll();
 		program.execute(Paths.getText(path));
-		set('game',PlayState.self);
-		set('addModifier', function(n:String)
-		{
-			PlayState.self.mod.addModifier(n);
-		});
-		set('setPercent', function(n:String, v:Float)
-		{
-			PlayState.self.mod.setPercent(n, v);
-		});
+		set('game', PlayState.self);
+		set('addModifier', function(n:String) {});
+		set('setPercent', function(n:String, v:Float) {});
 	}
 
-	override function set(n:String, v:Dynamic) {
-		program.access.setVariable(n,v);
+	override function set(n:String, v:Dynamic)
+	{
+		program.access.setVariable(n, v);
 	}
 
 	override function call(n:String, args:Array<Dynamic>):Dynamic
 	{
-		return program.access.callFunction(n,args);
+		return program.access.callFunction(n, args);
 	}
 
 	public override function dispose():Void

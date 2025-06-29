@@ -751,6 +751,7 @@
     "player2": "senpai",
     "song": "Dreams Of Roses",
     "stage": "school",
+    "arrowSkin":"default-pixel",
     "needsVoices": true,
     "validScore": true,
     "bpm": 133,

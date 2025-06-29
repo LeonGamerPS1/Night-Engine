@@ -1,5 +1,6 @@
 package backend;
 
+
 import moonchart.formats.fnf.legacy.FNFPsych;
 
 typedef SongMap =
@@ -54,7 +55,7 @@ typedef Event =
 
 class Song
 {
-	public static function grabSong(songID:String = 'Test', jsonName:String = 'hard'):SongMap
+	public static function grabSong(songID:String = 'Duality', jsonName:String = 'hard'):SongMap
 	{
 		final songPath:String = Paths.getAssetPath('songs/$songID/$jsonName.json'); // assets/song/thing.json for example
 

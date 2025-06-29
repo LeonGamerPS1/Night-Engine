@@ -14,7 +14,7 @@ class HealthIcon extends FlxSprite
 
 	private var iconOffsets:Array<Float> = [0, 0];
 
-	function changeIcon(id:String = 'default', ?isPlayer:Bool = false)
+	public function changeIcon(id:String = 'default', ?isPlayer:Bool = false)
 	{
 		this.isPlayer = isPlayer;
 		var img = Paths.image('icons/icon-$id');

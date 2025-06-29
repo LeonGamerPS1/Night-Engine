@@ -1,4 +1,5 @@
 package backend;
+
 import openfl.display.BitmapData;
 import openfl.media.Sound;
 import openfl.net.URLRequest;
@@ -20,7 +21,7 @@ class Paths
 		return 'assets/$path';
 	}
 
-	inline public static function font(key:String)
+	public static function font(key:String)
 	{
 		return getPath('fonts/$key');
 	}
@@ -57,8 +58,6 @@ class Paths
 	public static inline function xml(key:String):String
 	{
 		var path = getPath('images/$key.xml');
-		if (FileSystem.exists(path))
-			return File.read(path).readAll().toString();
 
 		return path;
 	}
@@ -126,11 +125,10 @@ class Paths
 		return FileSystem.exists(id);
 	}
 
-	public static function sanitizeFilename(name:String):String {
-        // Replace invalid characters with '_'
-      
+	public static function sanitizeFilename(name:String):String
+	{
+		// Replace invalid characters with '_'
 
-    
-        return name.replace(":",'_');
-    }
+		return name.replace(":", '_');
+	}
 }

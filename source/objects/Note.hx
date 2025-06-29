@@ -12,15 +12,20 @@ class Note extends FlxSprite
 	public var strumLine:StrumLine;
 
 	public var parent(default, default):Note;
+	public var sustainAngle(get, default):Float = 90;
+	public var flipSustain:Bool = false;
+	public var speed:Float = 1;
+	public var sustain:Sustain;
 
-	public function new(noteData:NoteData, sus:Bool = false, ?prevNote:Note = null, ?texture:String = "default")
+	public function new(noteData:NoteData, sus:Bool = false, ?prevNote:Note = null, ?texture:String = "default", ?strumLine:StrumLine)
 	{
 		super(-500);
 		this.noteData = noteData;
+		this.strumLine = strumLine;
 		this.skin = texture;
 		this.noteData = noteData;
 		this.prevNote = prevNote;
-		this.isSustainNote = sus;
+
 		reload();
 	}
 
@@ -43,33 +48,14 @@ class Note extends FlxSprite
 		animation.addByPrefix('hold', dirs[data % dirs.length] + ' hold piece0', 24, false);
 		animation.addByPrefix('end', dirs[data % dirs.length] + ' hold end0', 24, false);
 
+		var sizeMult:Float = strumLine != null ? strumLine.size : 1;
 		playAnim('arrow');
 
 		scale.set(skinData.scale, skinData.scale);
+		scale.x *= sizeMult;
+		scale.y *= sizeMult;
 		updateHitbox();
 		antialiasing = skinData.antialiasing;
-
-		if (prevNote != null && isSustainNote)
-		{
-			set.x += width / 2;
-			playAnim('end');
-			updateHitbox();
-
-			multAlpha = 0.7;
-			alpha = 0.7;
-			updateHitbox();
-			antialiasing = skinData.antialiasing;
-
-			set.x -= width / 2;
-
-			if (prevNote.isSustainNote)
-			{
-				prevNote.antialiasing = false;
-				prevNote.playAnim('hold');
-				prevNote.scale.y = (prevNote.skinData.sustainScale) * Conductor.instance.stepCrochet / 100 * 1.470 * PlayState.song.speed;
-				prevNote.updateHitbox();
-			}
-		}
 	}
 
 	public var skinData(default, null):Dynamic;
@@ -89,7 +75,6 @@ class Note extends FlxSprite
 		centerOrigin();
 	}
 
-	public var isSustainNote:Bool = false;
 	public var prevNote:Note = null;
 	public var wasGoodHit:Bool = false;
 	public var multAlpha:Float = 1;
@@ -110,42 +95,35 @@ class Note extends FlxSprite
 			&& !(noteData.time <= Conductor.instance.time - Conductor.safeZoneOffset * 0.5));
 	}
 
-	public function clipToStrumNote(myStrum:Strum)
-	{
-		var mustPress = strumLine.cpu;
-		var center:Float = myStrum.y + set.y + myStrum.height / 2;
-		flipY = isSustainNote && myStrum.downScroll;
-		if ((mustPress || !ignoreNote) && (wasGoodHit || (prevNote.wasGoodHit && !canBeHit)))
-		{
-			var swagRect:FlxRect = clipRect;
-			if (swagRect == null)
-				swagRect = new FlxRect(0, 0, frameWidth, frameHeight);
+	var distance:Float = 3000;
+	var multSpeed:Float = 1;
 
-			if (myStrum.downScroll)
-			{
-				if (y - offset.y * scale.y + height >= center)
-				{
-					swagRect.width = frameWidth;
-					swagRect.height = (center - y) / scale.y;
-					swagRect.y = frameHeight - swagRect.height;
-				}
-			}
-			else if (y + offset.y * scale.y <= center)
-			{
-				swagRect.y = (center - y) / scale.y;
-				swagRect.width = width / scale.x;
-				swagRect.height = (height / scale.y) - swagRect.y;
-			}
-			clipRect = swagRect;
-		}
+	public function followStrumNote(myStrum:Strum, songSpeed:Float = 1)
+	{
+		var strumX:Float = myStrum.x;
+		var strumY:Float = myStrum.y;
+		var strumAngle:Float = myStrum.angle;
+		var strumAlpha:Float = myStrum.alpha;
+		var strumDirection:Float = myStrum.direction;
+
+		speed = songSpeed * multSpeed;
+		distance = (0.45 * (Conductor.instance.time - noteData.time) * speed);
+		downScroll = myStrum.downScroll;
+		if (!myStrum.downScroll)
+			distance *= -1;
+
+		var angleDir = strumDirection * Math.PI / 180;
+
+		angle = strumAngle;
+		alpha = strumAlpha * multAlpha;
+		x = strumX + set.x + Math.cos(angleDir) * distance;
+		y = strumY + set.y + Math.sin(angleDir) * distance;
+		
 	}
 
-	override function set_clipRect(r:FlxRect)
+	function get_sustainAngle():Float
 	{
-		clipRect = r;
-		if (frames != null)
-			frame = frames.frames[animation.frameIndex];
-		return clipRect = r;
+		return (sustainAngle + (parent.strumLine != null ? parent.strumLine.strums.members[parent.noteData.data].direction : 0)) - 90;
 	}
 }
 

@@ -5,7 +5,7 @@ import openfl.display.Sprite;
 
 class Main extends Sprite
 {
-	public static var subdivs(default, null):Int = 4;
+	public static var subdivs(default, null):Int = 1;
 	public function new()
 	{
 		super();
