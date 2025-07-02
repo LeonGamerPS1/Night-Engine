@@ -54,7 +54,7 @@
 	<haxelib name="moonchart" />
 	<haxelib name="rulescript" />
 
-	<haxedef  name="hscriptPos"/>
+
 
 	<!--In
 	case you want to use nape with flixel-->

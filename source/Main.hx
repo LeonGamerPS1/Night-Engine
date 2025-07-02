@@ -1,6 +1,7 @@
 package;
 
 import flixel.FlxGame;
+import lime.graphics.Image;
 import openfl.display.Sprite;
 
 class Main extends Sprite
@@ -10,8 +11,9 @@ class Main extends Sprite
 	{
 		super();
 
-		addChild(new FlxGame(0, 0, PlayState));
+		addChild(new FlxGame(0, 0, PlayState, 122, 122));
 		addChild(new openfl.display.FPS(10, 10, 0xFFFFFFFF));
+		FlxG.stage.window.setIcon(Image.fromBitmapData(Paths.image("icons/icon-bf").bitmap));
 		FlxG.inputs.add( Controls.instance = new Controls('coolbatfnf'));
 		
 	}

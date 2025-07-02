@@ -77,7 +77,7 @@ enum Action
 	@:inputs([FlxKey.BACKSPACE, FlxKey.ESCAPE, B, BACK])
 	UI_BACK;
 
-	@:inputs([FlxKey.ENTER, A, FlxVirtualPadInputID.A])
+	@:inputs([FlxKey.ENTER, FlxVirtualPadInputID.A])
 	UI_ACCEPT;
 
 	@:inputs([FlxKey.R, X])

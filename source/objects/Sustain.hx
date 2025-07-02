@@ -28,7 +28,7 @@ class Sustain extends TiledSprite
 		updateHitbox();
 
         var mult:Float = parent.strumLine != null ? parent.strumLine.size : 1;
-		setGraphicSize(width * parent.skinData.scale * mult);
+		setGraphicSize(width * parent.skinData.scale * mult, frameHeight * parent.skinData.sustainScale);
 		updateHitbox();
 
 		antialiasing = parent.antialiasing;
@@ -36,6 +36,7 @@ class Sustain extends TiledSprite
 
 	override function draw()
 	{
+		parent.visible = !parent.wasGoodHit;
 		var length:Float = parent.noteData.length;
 
 		if (parent.wasGoodHit)
@@ -44,7 +45,7 @@ class Sustain extends TiledSprite
 		var expectedHeight:Float = (length * 0.45 * parent.speed);
 		
 		if (height != expectedHeight)
-			this.height = Math.max(expectedHeight + (44 * parent.strumLine.size), 0);
+			this.height = Math.max(expectedHeight, 0);
 
 		if (alpha != parent.alpha * 0.7)
 			alpha = parent.alpha * 0.7;
@@ -63,7 +64,7 @@ class Sustain extends TiledSprite
 		if (parent.downScroll)
 		{
 			angle = calcAngle + 180;
-			y -= 30;
+			y -= 40;
 		
 		}
 		else

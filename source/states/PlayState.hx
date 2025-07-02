@@ -6,6 +6,8 @@ import lime.app.Application;
 import lime.math.Rectangle;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
+import openfl.system.System;
+import substates.PauseMenu;
 #if sys
 import sys.FileSystem;
 import sys.io.File;
@@ -24,6 +26,7 @@ class PlayState extends FlxState implements IStageState
 	public static var song:SongMap;
 
 	public var camHUD:FlxCamera;
+	public var camOther:FlxCamera;
 	public var ui:FlxGroup;
 
 	public var startedCountdown:Bool = false;
@@ -51,6 +54,7 @@ class PlayState extends FlxState implements IStageState
 	public var curStage:String = '?';
 	public var iconP1:HealthIcon;
 	public var iconP2:HealthIcon;
+	public var paused:Bool = false;
 
 	public function stageLoad()
 	{
@@ -61,6 +65,7 @@ class PlayState extends FlxState implements IStageState
 
 		jsStage = Json.parse(Paths.getText(path));
 		BF_X = jsStage.bf.x;
+
 		BF_Y = jsStage.bf.y;
 
 		DAD_X = jsStage.dad.x;
@@ -80,11 +85,13 @@ class PlayState extends FlxState implements IStageState
 		{
 			case 'stage':
 				addStage(new objects.stages.Week1(this, true, null));
+			case 'spooky':
+				addStage(new objects.stages.Week2(this, true, null));	
 
 			case 'school':
 				addStage(new objects.stages.Week6(this, true, null));
 			case 'schoolEvil':
-				addStage(new objects.stages.Week6Evil(this, true, null));	
+				addStage(new objects.stages.Week6Evil(this, true, null));
 		}
 		// call('onStageLoaded');
 		if (Paths.exists('assets/stages/$curStage.hscript'))
@@ -112,6 +119,11 @@ class PlayState extends FlxState implements IStageState
 		camHUD.zoom = 1;
 		camHUD.bgColor.alpha = 0;
 		FlxG.cameras.add(camHUD, false);
+
+		camOther = new FlxCamera();
+		camOther.zoom = 1;
+		camOther.bgColor.alpha = 0;
+		FlxG.cameras.add(camOther, false);
 
 		stageLoad();
 		initchar();
@@ -439,6 +451,8 @@ class PlayState extends FlxState implements IStageState
 		else
 			Conductor.instance.time = tracks.get('main').time;
 
+		iconP1.animation.curAnim.curFrame = (healthBar.percent < 20) ? 1 : 0; // If health is under 20%, change player icon to frame 1 (losing icon), otherwise, frame 0 (normal)
+		iconP2.animation.curAnim.curFrame = (healthBar.percent > 80) ? 1 : 0; // If health is over 80%, change opponent icon to frame 1 (losing icon), otherwise, frame 0 (normal)
 		checkEventNote();
 		for (_ in tracks)
 			if (_ != tracks.get('main') && Math.abs(_.time - tracks.get('main').time) > 40)
@@ -467,6 +481,24 @@ class PlayState extends FlxState implements IStageState
 			Conductor.instance.reset(true);
 			FlxG.switchState(new Charter());
 		}
+		if (Controls.instance.justPressed.UI_ACCEPT)
+		{
+			paused = true;
+			for (poop in tracks)
+				if (poop.playing)
+					poop.pause();
+			openSubState(new PauseMenu(camOther));
+		}
+	}
+
+	override function closeSubState()
+	{
+		super.closeSubState();
+		for (poop in tracks)
+			if (poop.time > -1 && !poop.playing)
+				poop.resume();
+		subState = null;
+		System.gc();
 	}
 
 	override function destroy()
@@ -577,6 +609,38 @@ class PlayState extends FlxState implements IStageState
 	function get_center():Float
 	{
 		return (healthBar != null ? healthBar.x - (healthBar.width * (healthBar.percent / 100)) + healthBar.width : 0);
+	}
+	public function reboot()
+	{
+		eventNotes = [];
+		for (buttocks in strumLines)
+		{
+			@:privateAccess
+			for (buttock in buttocks.notes)
+			{
+				if (buttock.sustain != null)
+				{
+					buttocks.sustains.remove(buttock.sustain, true);
+					buttock.sustain.destroy();
+					buttock.sustain = null;
+				}
+				buttock.destroy();
+				buttocks.notes.remove(buttock, true);
+				buttock = null;
+			}
+			for (poop in tracks)
+				if (poop.playing)
+					poop.stop();
+			startedCountdown = false;
+			startedSong = false;
+			Conductor.instance.changeBpmAt(0, song.bpm, 4, 4);
+			Conductor.instance.time = -Conductor.instance.crochet * 5;
+			score = 0;
+			misses = 0;
+			accuracy = 0;
+			genC();
+			startCountdown();
+		}
 	}
 }
 

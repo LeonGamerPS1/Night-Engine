@@ -45,6 +45,8 @@ class HealthIcon extends FlxSprite
 			offset.x = iconOffsets[0];
 			offset.y = iconOffsets[1];
 		}
+		origin.y = 0;
+	
 	}
 
 	public function getCharacter():String

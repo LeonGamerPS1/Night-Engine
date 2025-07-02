@@ -1,6 +1,6 @@
 {
     "scale": 0.7,
-    "sustainScale": 0.7,
+    "sustainScale": 1,
     "antialiasing": true,
     "fps": 24,
     "name": "default",

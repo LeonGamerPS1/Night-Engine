@@ -27,6 +27,7 @@ class StrumLine extends FlxSpriteGroup
 		this.downScroll = downScroll;
 
 
+
 		strums = new FlxTypedSpriteGroup<Strum>();
 		add(strums);
 
@@ -107,13 +108,21 @@ class StrumLine extends FlxSpriteGroup
 
 			if (cpu && (note.noteData.time <= Conductor.instance.time) && !note.ignoreNote)
 			{
-				strum.playAnim('confirm', !note.wasGoodHit);
+				strum.playAnim('confirm', false);
 
 				if (character != null)
 					character.sing(note);
 
 				hitSignal(note);
 				note.wasGoodHit = true;
+			}
+
+			if (note.noteData.time < Conductor.instance.time - (350 / songSpeed) && !note.wasGoodHit)
+			{
+				if (!cpu && !note.wasGoodHit && !note.ignoreNote)
+					miss(note.noteData.data);
+
+				invalNote(note);
 			}
 
 			if (note.wasGoodHit && !note.ignoreNote)
@@ -128,13 +137,6 @@ class StrumLine extends FlxSpriteGroup
 				}
 			}
 
-			if (note.noteData.time < Conductor.instance.time - (350 / songSpeed) && !note.wasGoodHit)
-			{
-				if (!cpu && !note.wasGoodHit && !note.ignoreNote)
-					miss(note.noteData.data);
-
-				invalNote(note);
-			}
 			if (note.noteData.time + note.noteData.length < Conductor.instance.time && note.wasGoodHit && !note.ignoreNote)
 				invalNote(note);
 		});

@@ -25,6 +25,7 @@ class Charter extends FlxUIState
 	public static var _song:SongMap;
 
 	public var line:FlxSprite;
+	public var lineEnd:FlxSprite;
 	public var inst:FlxSound;
 	public var paused:Bool = true;
 	public var destroyOnReload:FlxGroup = new FlxGroup();
@@ -88,6 +89,13 @@ class Charter extends FlxUIState
 		line.makeGraphic(Std.int(gridBG.width), Std.int(GRID_SIZE / 8));
 		line.graphic.bitmap.disposeImage();
 		add(line);
+
+		lineEnd = new FlxSprite(gridBG.x, gridBG.y + (GRID_SIZE * 10));
+		lineEnd.scrollFactor.x = 0;
+		lineEnd.makeGraphic(Std.int(gridBG.width), Std.int(GRID_SIZE / 8));
+		lineEnd.graphic.bitmap.disposeImage();
+		add(lineEnd);
+
 
 		add(renderedSustains);
 		add(renderedNotes);
@@ -185,12 +193,22 @@ class Charter extends FlxUIState
 
 		for (note in _song.notes)
 		{
+
 			var strumline = [strumLineone,strumLinetwo,strumLinethree][note.strumLine];
 			var noteObject:Note = new Note(note, false, null, strumline.strums.members[note.data].skin, strumline);
 			noteObject.scrollFactor.x = 0;
 			noteObject.x = (GRID_SIZE * note.data) + (GRID_SIZE * 4 * note.strumLine) + gridBG.x;
 			noteObject.y = getYfromStrum(note.time);
 			renderedNotes.add(noteObject);
+
+			trace(noteObject.getScreenPosition().y);
+			if (noteObject.getScreenPosition().y > FlxG.height)
+			{
+				renderedNotes.remove(noteObject, true);
+				noteObject.destroy();
+				noteObject = null;
+				break;
+			}
 
 			if (note.length > 0)
 			{
@@ -342,6 +360,7 @@ class Charter extends FlxUIState
 		}
 
 		line.y = getYfromStrum(inst.time);
+		lineEnd.y = line.y + (GRID_SIZE * 9) - 1;
 		strumLineone.strums.y = line.y;
 		strumLinetwo.strums.y = line.y;
         strumLinethree.strums.y = line.y;

@@ -65,5 +65,6 @@ class Strum extends FlxSprite
 
 		centerOffsets();
 		centerOrigin();
+
 	}
 }

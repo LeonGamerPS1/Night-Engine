@@ -25,6 +25,8 @@ class Note extends FlxSprite
 		this.skin = texture;
 		this.noteData = noteData;
 		this.prevNote = prevNote;
+		shader = new FlxShader();
+		shader.glProgram;
 
 		reload();
 	}

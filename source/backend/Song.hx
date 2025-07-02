@@ -55,7 +55,7 @@ typedef Event =
 
 class Song
 {
-	public static function grabSong(songID:String = 'Duality', jsonName:String = 'hard'):SongMap
+	public static function grabSong(songID:String = 'Senpai', jsonName:String = 'hard'):SongMap
 	{
 		final songPath:String = Paths.getAssetPath('songs/$songID/$jsonName.json'); // assets/song/thing.json for example
 
@@ -73,6 +73,7 @@ class Song
 			raw = null;
 			fuckingRaw = null;
 			json.events.sort(function(event1, event2) return Math.floor(event1.time - event2.time));
+			json.players[1] ??= 'gf';
 			return json;
 		}
 		return {
