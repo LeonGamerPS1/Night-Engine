@@ -10,6 +10,7 @@ class StrumLine extends FlxSpriteGroup
 	public var strums:FlxTypedSpriteGroup<Strum>;
 
 	public var notes:FlxTypedSpriteGroup<Note>;
+	public var covers:FlxTypedSpriteGroup<SustainCover>;
 
 	public var unspawnNotes:Array<Note> = [];
 	public var cpu = true;
@@ -26,8 +27,6 @@ class StrumLine extends FlxSpriteGroup
 		this.sk = skin;
 		this.downScroll = downScroll;
 
-
-
 		strums = new FlxTypedSpriteGroup<Strum>();
 		add(strums);
 
@@ -36,6 +35,9 @@ class StrumLine extends FlxSpriteGroup
 
 		notes = new FlxTypedSpriteGroup<Note>();
 		add(notes);
+
+		covers = new FlxTypedSpriteGroup<SustainCover>();
+		add(covers);
 
 		generate();
 	}
@@ -49,6 +51,13 @@ class StrumLine extends FlxSpriteGroup
 			i = null;
 		}
 
+		for (i in covers)
+		{
+			i.destroy();
+			covers.remove(i, true);
+			i = null;
+		}
+
 		for (i in 0...4)
 		{
 			var strum:Strum = new Strum(i, sk, this);
@@ -58,6 +67,7 @@ class StrumLine extends FlxSpriteGroup
 			strum.x = strum.x + (160 * 0.7) * i * size;
 			strum.y = strums.y;
 			strum.strumLine = this;
+			covers.add(strum.cover);
 		}
 	}
 
@@ -89,12 +99,6 @@ class StrumLine extends FlxSpriteGroup
 			}
 		}
 
-		strums.forEachAlive(function(s)
-		{
-			if (s.animation.finished && cpu)
-				s.playAnim('static');
-		});
-
 		super.update(elapsed);
 
 		if (!cpu)
@@ -108,12 +112,20 @@ class StrumLine extends FlxSpriteGroup
 
 			if (cpu && (note.noteData.time <= Conductor.instance.time) && !note.ignoreNote)
 			{
-				strum.playAnim('confirm', false);
+				if (!note.wasGoodHit)
+					strum.playAnim('confirm', true);
 
 				if (character != null)
-					character.sing(note);
+					character.sing(note, !note.wasGoodHit);
 
+				strum.r = 0.25;
 				hitSignal(note);
+				if (note.noteData.length > 0)
+				{
+					strum.cover.visible = true;
+					strum.cover.animation.play('start');
+				}
+
 				note.wasGoodHit = true;
 			}
 
@@ -138,12 +150,27 @@ class StrumLine extends FlxSpriteGroup
 			}
 
 			if (note.noteData.time + note.noteData.length < Conductor.instance.time && note.wasGoodHit && !note.ignoreNote)
+			{
 				invalNote(note);
+				if (note.noteData.length > 0)
+				{
+					strum.playAnim(cpu ? 'static' : 'press', true);
+					strum.cover.visible = !cpu;
+					if (!cpu)
+						strum.cover.animation.play('end', true);
+				}
+			}
 		});
 	}
 
 	function invalNote(note:Note)
 	{
+		var strum = strums.members[note.noteData.data % strums.length];
+		if (note.noteData.length > 0)
+		{
+			strum.cover.visible = false;
+			strum.cover.animation.play('start');
+		}
 		if (note.sustain != null)
 		{
 			sustains.remove(note.sustain, true);
@@ -201,8 +228,7 @@ class StrumLine extends FlxSpriteGroup
 				strum.playAnim('press', true);
 			else if (!keyHold[strum.data])
 			{
-				if (strum.animation.finished)
-					strum.playAnim('static', false);
+				strum.playAnim('static', false);
 			}
 		});
 
@@ -237,11 +263,17 @@ class StrumLine extends FlxSpriteGroup
 	function playerHit(shittNo:Note)
 	{
 		var strum = strums.members[shittNo.noteData.data % strums.length];
-		strum.playAnim('confirm', !shittNo.wasGoodHit);
+		if (!shittNo.wasGoodHit)
+			strum.playAnim('confirm', true);
 
 		if (character != null)
-			character.sing(shittNo);
+			character.sing(shittNo, !shittNo.wasGoodHit);
 
+		if (shittNo.noteData.length > 0)
+		{
+			strum.cover.visible = true;
+			strum.cover.animation.play('start');
+		}
 		hitSignal(shittNo);
 
 		shittNo.wasGoodHit = true;

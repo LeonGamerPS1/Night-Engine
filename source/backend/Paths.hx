@@ -1,10 +1,8 @@
 package backend;
 
-import openfl.display.BitmapData;
+import openfl.Assets;
 import openfl.media.Sound;
-import openfl.net.URLRequest;
-import sys.FileSystem;
-import sys.io.File;
+
 
 class Paths
 {
@@ -38,10 +36,10 @@ class Paths
 		if (images.exists(path))
 			return images.get(path);
 
-		if (FileSystem.exists(path))
+		if (exists(path))
 		{
 			var image:FlxGraphic = null;
-			image = FlxGraphic.fromBitmapData(BitmapData.fromFile(path));
+			image = FlxGraphic.fromBitmapData(Assets.getBitmapData(path));
 
 			image.bitmap.disposeImage();
 			image.persist = true;
@@ -113,16 +111,14 @@ class Paths
 	@:inheritDoc(openfl.Assets.getText)
 	public static function getText(id:String)
 	{
-		var content = File.read(id);
-		var output = content.readAll().toString();
-		content.close();
+		var output:String = Assets.getText(id);
 		return output;
 	}
 
 	@:inheritDoc(openfl.Assets.getText)
 	public static function exists(id:String)
 	{
-		return FileSystem.exists(id);
+		return Assets.exists(id);
 	}
 
 	public static function sanitizeFilename(name:String):String
@@ -130,5 +126,9 @@ class Paths
 		// Replace invalid characters with '_'
 
 		return name.replace(":", '_');
+	}
+	public static function frag(s:String)
+	{
+		return getPath('shaders/$s.frag');
 	}
 }

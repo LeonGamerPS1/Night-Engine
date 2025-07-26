@@ -5,8 +5,8 @@
     "fps": 24,
     "name": "pixel",
       "cover":{
-        "offsetX":120,
-        "offsetY":26,
+        "offsetX":115.5,
+        "offsetY":24.2,
         "scaleX":6,
         "scaleY":6
     }

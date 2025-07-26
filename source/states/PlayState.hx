@@ -4,9 +4,12 @@ import backend.Song;
 import haxe.io.Path;
 import lime.app.Application;
 import lime.math.Rectangle;
+import lime.system.CFFI;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
+import openfl.filters.ShaderFilter;
 import openfl.system.System;
+import shaders.MosaicEffect;
 import substates.PauseMenu;
 #if sys
 import sys.FileSystem;
@@ -66,6 +69,7 @@ class PlayState extends FlxState implements IStageState
 		jsStage = Json.parse(Paths.getText(path));
 		BF_X = jsStage.bf.x;
 
+
 		BF_Y = jsStage.bf.y;
 
 		DAD_X = jsStage.dad.x;
@@ -86,17 +90,13 @@ class PlayState extends FlxState implements IStageState
 			case 'stage':
 				addStage(new objects.stages.Week1(this, true, null));
 			case 'spooky':
-				addStage(new objects.stages.Week2(this, true, null));	
+				addStage(new objects.stages.Week2(this, true, null));
 
 			case 'school':
 				addStage(new objects.stages.Week6(this, true, null));
 			case 'schoolEvil':
 				addStage(new objects.stages.Week6Evil(this, true, null));
 		}
-		// call('onStageLoaded');
-		if (Paths.exists('assets/stages/$curStage.hscript'))
-			scripts.push(makeScript('assets/stages/$curStage.hscript', HSCRIPT));
-		call('onStageLoaded', [curStage]);
 	}
 
 	override public function create()
@@ -132,11 +132,6 @@ class PlayState extends FlxState implements IStageState
 		ui.cameras = [camHUD];
 		add(ui);
 
-		if (Paths.exists('assets/songs/${song.songName}.hscript'))
-			scripts.push(makeScript('assets/songs/${song.songName}.hscript', HSCRIPT));
-
-		call('onCreate');
-
 		dadStrums = new StrumLine((160 * 0.7 / 2) + 50, !downScroll ? 50 : FlxG.height - 150, downScroll, skin);
 		strumLines.push(dadStrums);
 		ui.add(dadStrums);
@@ -169,8 +164,8 @@ class PlayState extends FlxState implements IStageState
 		iconP1.x = healthBar.x + healthBar.width / 2 + 10;
 		ui.add(iconP1);
 
-		scoreText = new FlxText(healthBar.x + healthBar.width - 190, healthBar.y + 30, 0, 'Score: 0 // Misses: 0 // Rating: 0% (Unjudged)', 20);
-		scoreText.setFormat(Paths.font('vcr.ttf'), 20, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		scoreText = new FlxText(healthBar.x + healthBar.width - 190, healthBar.y + 30, 0, 'Score: 0 | Misses: 0 | Rating: 0% (Unjudged)', 20);
+		scoreText.setFormat(Paths.font('vcr.ttf'), 10, FlxColor.WHITE, RIGHT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
 		scoreText.borderSize = 1;
 		scoreText.screenCenter(X);
 		ui.add(scoreText);
@@ -194,32 +189,11 @@ class PlayState extends FlxState implements IStageState
 		genC();
 
 		startCallback();
-		call('onCreatePost');
-	}
-
-	public function set(n:String, v:Dynamic)
-	{
-		for (_ in scripts)
-			_.set(n, v);
-	}
-
-	public function call(s:String, ?args:Array<Dynamic>):Dynamic
-	{
-		args ??= [];
-		var returnVal = null;
-		for (_ in scripts)
-		{
-			returnVal = _.call(s, args);
-			if (returnVal != null)
-				continue;
-		}
-		return returnVal;
 	}
 
 	public var bf:BaseCharacter;
 	public var dad:BaseCharacter;
 	public var gf:BaseCharacter;
-	public var scripts:Array<BaseScript> = [];
 
 	public var eventNotes:Array<Event> = [];
 
@@ -368,8 +342,6 @@ class PlayState extends FlxState implements IStageState
 
 	public function hit(note:Note)
 	{
-		if (!note.wasGoodHit)
-			call('hit', [note]);
 		if (note.strumLine != null && !note.strumLine.cpu && !note.wasGoodHit)
 		{
 			score += 350.1;
@@ -431,14 +403,15 @@ class PlayState extends FlxState implements IStageState
 			FlxTween.tween(screenshotSPR, {alpha: 0}, 1);
 		}
 		#end
-		call('onUpdate', [elapsed]);
+
 		health = FlxMath.bound(health, 0, 2);
 		score = FlxMath.roundDecimal(score, 2);
-		var scoreString:String = 'Score: $score // Misses: $misses // Rating: 0% (Unjudged, YOU SUCK!)';
+		var scoreString:String = 'Score: $score // Misses: $misses // Rating: 0% (Unjudged)';
 		scoreText.text = scoreString;
 		scoreText.screenCenter(X);
 		camHUD.zoom = FlxMath.lerp(1, camHUD.zoom, Math.exp(-elapsed * 5));
 		FlxG.camera.zoom = FlxMath.lerp(defaultZoom, FlxG.camera.zoom, Math.exp(-elapsed * 5));
+
 		if (!startedSong)
 		{
 			if (startedCountdown)
@@ -458,11 +431,11 @@ class PlayState extends FlxState implements IStageState
 			if (_ != tracks.get('main') && Math.abs(_.time - tracks.get('main').time) > 40)
 				_.time = tracks.get('main').time;
 		super.update(elapsed);
-		var mult:Float = FlxMath.lerp(1, iconP1.scale.x, Math.exp(-elapsed * 9));
+		var mult:Float = FlxMath.lerp(1, iconP1.scale.x, Math.exp(-elapsed * 5));
 		iconP1.scale.set(mult, mult);
 		iconP1.updateHitbox();
 
-		var mult:Float = FlxMath.lerp(1, iconP2.scale.x, Math.exp(-elapsed * 9));
+		var mult:Float = FlxMath.lerp(1, iconP2.scale.x, Math.exp(-elapsed * 5));
 		iconP2.scale.set(mult, mult);
 		iconP2.updateHitbox();
 
@@ -470,12 +443,13 @@ class PlayState extends FlxState implements IStageState
 		var iconOffset:Int = 26;
 		iconP1.x = barCenter + (150 * iconP1.scale.x - 150) / 2 - iconOffset;
 		iconP2.x = barCenter - (150 * iconP2.scale.x) / 2 - iconOffset * 2;
-
+		iconP1.y = healthBar.y - (iconP1.height / 2);
+		iconP2.y = healthBar.y - (iconP1.height / 2);
 		forEachStage((_) ->
 		{
 			_.updatePost(elapsed);
 		});
-		call('onUpdatePost', [elapsed]);
+
 		if (Controls.instance.justPressed.CHART)
 		{
 			Conductor.instance.reset(true);
@@ -505,20 +479,6 @@ class PlayState extends FlxState implements IStageState
 	{
 		self = null;
 		super.destroy();
-	}
-
-	public function makeScript(path:String, ?type:ScriptType = HSCRIPT):BaseScript
-	{
-		switch (type)
-		{
-			default:
-				trace("[SCRIPTLOADER] Script type ' " + type + "' doesn't exist. Available Types: \n HSCRIPT \n LUA");
-			case HSCRIPT:
-				var script:HScript = new HScript(path, path);
-				trace("[SCRIPTLOADER] SUCCESSFULLY LOADED SCRIPT: " + path);
-				return script;
-		}
-		return null;
 	}
 
 	function startSong()
@@ -551,7 +511,6 @@ class PlayState extends FlxState implements IStageState
 
 	public function step(val:Float)
 	{
-		call('step', [val]);
 		forEachStage((_) ->
 		{
 			_.curStep = val;
@@ -566,7 +525,7 @@ class PlayState extends FlxState implements IStageState
 
 		iconP2.scale.set(1.2, 1.2);
 		iconP2.updateHitbox();
-		call('beat', [val]);
+
 		forEachStage((_) ->
 		{
 			_.curBeat = val;
@@ -576,9 +535,9 @@ class PlayState extends FlxState implements IStageState
 
 	public function section(val:Float)
 	{
-		call('section', [val]);
 		FlxG.camera.zoom += 0.02;
 		camHUD.zoom += 0.04;
+
 		forEachStage((_) ->
 		{
 			_.curSection = val;
@@ -610,6 +569,7 @@ class PlayState extends FlxState implements IStageState
 	{
 		return (healthBar != null ? healthBar.x - (healthBar.width * (healthBar.percent / 100)) + healthBar.width : 0);
 	}
+
 	public function reboot()
 	{
 		eventNotes = [];

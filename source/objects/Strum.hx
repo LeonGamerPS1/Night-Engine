@@ -7,6 +7,8 @@ class Strum extends FlxSprite
 	public var downScroll:Bool = false;
 	public var strumLine:StrumLine;
 	public var direction:Float = 90;
+	public var r:Float = 0;
+	public var cover:SustainCover;
 
 	public function new(data:Int = 0, ?texture:String = "default", ?strumLine:StrumLine)
 	{
@@ -15,9 +17,8 @@ class Strum extends FlxSprite
 		this.strumLine = strumLine;
 		this.skin = texture;
 
-
+		cover = new SustainCover(this);
 		reload();
-
 	}
 
 	function set_skin(value:String):String
@@ -50,6 +51,10 @@ class Strum extends FlxSprite
 		updateHitbox();
 
 		antialiasing = skinData.antialiasing;
+		cover.setup(this);
+
+		
+
 	}
 
 	function parseSkin(skin:String)
@@ -65,6 +70,20 @@ class Strum extends FlxSprite
 
 		centerOffsets();
 		centerOrigin();
+	}
 
+	override function update(elapsed:Float)
+	{
+		super.update(elapsed);
+
+		if (r != 0)
+		{
+			r -= elapsed;
+			if (r <= 0)
+			{
+				r = 0;
+				playAnim('static');
+			}
+		}
 	}
 }

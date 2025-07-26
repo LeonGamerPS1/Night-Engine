@@ -1,12 +1,12 @@
 {
     "scale": 0.7,
-    "sustainScale": 1,
+    "sustainScale": 0.7,
     "antialiasing": true,
     "fps": 24,
     "name": "default",
     "cover":{
         "offsetX":-107,
-        "offsetY":-100,
+        "offsetY":-95,
         "scaleX":1,
         "scaleY":1
     }

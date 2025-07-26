@@ -42,13 +42,13 @@ class Sustain extends TiledSprite
 		if (parent.wasGoodHit)
 			length -= Math.abs(parent.noteData.time - Conductor.instance.time);
 
-		var expectedHeight:Float = (length * 0.45 * parent.speed);
+		var expectedHeight:Float = (length * 0.45 * parent.speed) + (_tailFrame.frame.height * scale.y);
 		
 		if (height != expectedHeight)
 			this.height = Math.max(expectedHeight, 0);
 
-		if (alpha != parent.alpha * 0.7)
-			alpha = parent.alpha * 0.7;
+		if (alpha != parent.alpha)
+			alpha = parent.alpha;
 
 		regenPos();
 
@@ -64,7 +64,7 @@ class Sustain extends TiledSprite
 		if (parent.downScroll)
 		{
 			angle = calcAngle + 180;
-			y -= 40;
+			y -= 30;
 		
 		}
 		else

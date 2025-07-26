@@ -1,5 +1,8 @@
 package objects;
 
+import animate.FlxAnimate;
+import animate.FlxAnimateFrames;
+
 typedef CharacterData =
 {
 	var icon:String;
@@ -39,11 +42,16 @@ class BaseCharacter extends FlxSprite
 		loadJSON(char);
 	}
 
+	public var atlas:FlxAnimate;
+
 	public function loadJSON(char:String = 'default')
 	{
 		this.json = null;
 		frames = null;
 		offsets.clear();
+
+		if (Paths.exists(Paths.getPath('images/characters/$char/Animation.json')))
+			initAtlas(char);
 
 		var path = Paths.getPath('characters/$char.json');
 
@@ -52,16 +60,37 @@ class BaseCharacter extends FlxSprite
 		trace(path);
 
 		this.json = cast Json.parse(Paths.getText(path));
-		frames = Paths.getAtlas(json.texture);
+
 		this.dancer = json.dancer;
 		this.antialiasing = json.antialiasing;
+
+		if (atlas == null)
+			frames = Paths.getAtlas(json.texture);
 
 		for (animData in json.animations)
 		{
 			if (animData.indices != null && animData.indices.length > 0)
+			{
 				animation.addByIndices(animData.name, animData.prefix, animData.indices, '', animData.fps, animData.looped, animData.flipX, animData.flipY);
+				try
+				{
+					if (atlas != null)
+						atlas.anim.addBySymbolIndices(animData.name, animData.prefix, animData.indices, animData.fps, animData.looped, animData.flipX,
+							animData.flipY);
+				}
+				catch (e:Dynamic) {}
+			}
 			else
+			{
 				animation.addByPrefix(animData.name, animData.prefix, animData.fps, animData.looped, animData.flipX, animData.flipY);
+				try
+				{
+					if (atlas != null)
+						atlas.anim.addBySymbol(animData.name, animData.prefix, animData.fps, animData.looped, animData.flipX, animData.flipY);
+				}
+				catch (e:Dynamic) {}
+			}
+
 			offsets.set(animData.name, animData.offset);
 		}
 		playAnim(!dancer ? 'idle' : 'danceLeft');
@@ -71,18 +100,30 @@ class BaseCharacter extends FlxSprite
 		flipX = (json.flipX != isPlayer);
 	}
 
+	function initAtlas(char:String)
+	{
+		atlas = new FlxAnimate(x, y);
+		atlas.frames = FlxAnimateFrames.fromAnimate(Paths.getPath('images/characters/$char'));
+	}
+
 	public function playAnim(anim:String = "idle", ?force:Bool = false)
 	{
 		animation.play(anim, force);
 		if (offsets.exists(anim))
 			offset.set(offsets[anim].x, offsets[anim].y);
+		if (atlas != null)
+		{
+			atlas.anim.play(anim, force);
+			atlas.offset.set(offsets[anim].x, offsets[anim].y);
+			
+		}
 	}
 
 	public static var SingAnimations:Array<String> = ['singLEFT', 'singDOWN', 'singUP', 'singRIGHT'];
 
-	public function sing(note:Note)
+	public function sing(note:Note,?play:Bool = true)
 	{
-		if (note != null)
+		if (note != null && play)
 			playAnim(SingAnimations[note.noteData.data % SingAnimations.length], true);
 		holdTimer = Conductor.instance.stepCrochet * json.holdSteps / 1000;
 	}
@@ -90,6 +131,8 @@ class BaseCharacter extends FlxSprite
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
+		if (atlas != null)
+			atlas.update(elapsed);
 		if (holdTimer > 0)
 		{
 			holdTimer -= elapsed;
@@ -105,9 +148,10 @@ class BaseCharacter extends FlxSprite
 	{
 		if (dancer)
 		{
-			if (animation.curAnim.name != 'danceLeft' && holdTimer == 0)
+
+			if (animation.name != 'danceLeft' && holdTimer == 0)
 				playAnim('danceLeft', true);
-			else if (animation.curAnim.name == 'danceLeft' && holdTimer == 0)
+			else if (animation.name == 'danceLeft' && holdTimer == 0)
 				playAnim('danceRight', true);
 		}
 		else
@@ -115,5 +159,33 @@ class BaseCharacter extends FlxSprite
 			if ((animation.finished) && holdTimer == 0)
 				playAnim('idle', true);
 		}
+	}
+
+	override function draw()
+	{
+		@:privateAccess
+		if (atlas != null)
+		{
+			atlas.setPosition(x, y);
+			atlas.scale = scale;
+			atlas.width = width;
+			atlas.height = height;
+			atlas.offset = offset;
+			atlas.origin = origin;
+			atlas.alpha = alpha;
+			atlas.visible = visible;
+			atlas.alive = this.alive;
+			atlas.exists = exists;
+			atlas.antialiasing = antialiasing;
+			atlas.blend = blend;
+			atlas.colorTransform = colorTransform;
+			atlas.active = active;
+			atlas.angle = angle;
+			atlas.flipX = flipX;
+			atlas.flipY = flipY;
+			atlas.draw();
+		}
+		else
+			super.draw();
 	}
 }

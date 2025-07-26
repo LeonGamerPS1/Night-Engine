@@ -20,28 +20,28 @@
     },
     {
       "name": "singLEFT",
-      "prefix": "BF NOTE LEFT0",
+      "prefix": "BF NOTE LEFT",
       "fps": 24,
       "looped": false,
       "offset": { "x": 5, "y": -6 }
     },
     {
       "name": "singDOWN",
-      "prefix": "BF NOTE DOWN0",
+      "prefix": "BF NOTE DOWN",
       "fps": 24,
       "looped": false,
       "offset": { "x": -20, "y": -51 }
     },
     {
       "name": "singUP",
-      "prefix": "BF NOTE UP0",
+      "prefix": "BF NOTE UP",
       "fps": 24,
       "looped": false,
       "offset": { "x": -46, "y": 27 }
     },
     {
       "name": "singRIGHT",
-      "prefix": "BF NOTE RIGHT0",
+      "prefix": "BF NOTE RIGHT",
       "fps": 24,
       "looped": false,
       "offset": { "x": -48, "y": -7 }

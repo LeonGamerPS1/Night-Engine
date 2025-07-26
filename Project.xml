@@ -36,7 +36,10 @@
 
 	<set name="BUILD_DIR" value="export" />
 	<source path="source" />
-	<assets path="assets" />
+	<assets path="assets" preload="false" />
+
+	<assets path="mods" preload="false" unless="web" />
+		<assets path="mods/friday night funkin" preload="false" rename="assets" if="web" />
 
 	<!-- _______________________________ Libraries ______________________________ -->
 
@@ -52,8 +55,9 @@
 	<haxelib name="flixel-ui" />
 	<haxelib name="flixel-controls" />
 	<haxelib name="moonchart" />
-	<haxelib name="rulescript" />
 
+	<haxelib name="flixel-animate" />
+	<haxelib name="polymod" />
 
 
 	<!--In
@@ -66,6 +70,8 @@
 	<!--Remove
 	the legacy health system-->
 	<haxedef name="FLX_NO_HEALTH" />
+
+	<haxedef name="hscriptPos" value="true" />
 
 	<!--Enable
 	the Flixel core recording system-->
